@@ -1,0 +1,41 @@
+version: '3'
+services:
+ hedgedoc_database:
+    image: '{{ database.image }}' 
+    environment:
+      - POSTGRES_USER='{{ database.postgres_user }}'
+      - POSTGRES_PASSWORD='{{ database.postgres_password }}'
+      - POSTGRES_DB='{{ database.postgres_user }}'
+    volumes:
+      - database:/var/lib/postgresql/data
+    restart: always
+  hedgedoc_app:
+    # Make sure to use the latest release from https://hedgedoc.org/latest-release
+    image: '{{ app.image }}' 
+    environment:
+      - CMD_DB_URL= '{{ app.cmd_dburl }}'
+      - CMD_DOMAIN= '{{ app.cmd_domain }}'
+      - CMD_URL_ADDPORT=true
+    volumes:
+      - uploads:/hedgedoc/public/uploads
+    ports:
+      - "{{ app.port }}:3000"
+    restart: always
+    depends_on:
+      - database
+volumes:
+  database:
+  uploads:
+
+# Watchtower detects if any linked containers have an new image
+# available, automatically updating & restarting them if needed.
+#hedgedoc-watchtower:
+#  container_name: hedgedoc-watchtower
+#  # https://hub.docker.com/r/centurylink/watchtower/
+#  image: containrrr/watchtower:latest
+#  # https://github.com/v2tec/watchtower#options
+#  # This schedule applies updates (if available) at midnight.
+#  command: --cleanup --schedule "0 0 0 * * *"
+#  restart: always
+#  volumes:
+#    - '/var/run/docker.sock:/var/run/docker.sock:z'

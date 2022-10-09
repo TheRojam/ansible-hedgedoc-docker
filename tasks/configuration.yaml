@@ -1,0 +1,45 @@
+---
+- name: Create "{{ docker_dir }} "if not exists
+  ansible.builtin.file:
+    path: "{{ docker_dir }}"
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+
+- name: Push docker-compose.yaml
+  ansible.builtin.template:
+    src: nc-compose.j2
+    dest: "{{ docker_dir }}/docker-compose.yaml"
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+
+- name: Push dockerfile
+  ansible.builtin.template:
+    src: dockerfile.j2
+    dest: "{{ dockerfile_path }}"
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+
+- name: Tear down existing "{{ docker_service }}" services
+  community.general.docker_compose:
+    project_name: "{{ docker_service }}"
+    project_src: "{{ docker_dir }}/"
+    state: absent
+  register: output
+
+- name: Show debug out
+  ansible.builtin.debug:
+    var: output
+
+- name: Create and start "{{ docker_service }}" services
+  community.general.docker_compose:
+    project_name: "{{ docker_service }}"
+    project_src: "{{ docker_dir }}/"
+  register: output
+
+- name: Show debug out
+  ansible.builtin.debug:
+    var: output
